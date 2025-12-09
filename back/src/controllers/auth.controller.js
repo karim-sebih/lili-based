@@ -1,82 +1,52 @@
-
+// back/src/controllers/auth.controller.js
 import authService from '../services/auth.service.js'
 
-async function register(c) {
+export const register = async (c) => {
   try {
-    const data = c.req.valid('json')
-     await authService.register(data)
+    const data = await c.req.json()
+    console.log("CONTROLLER → reçu :", data)
+
+    const user = await authService.register(data)
+
     return c.json({
-      message: 'Registration successful. Please check your email for verification.'
+      message: 'Inscription réussie !',
+      data: {
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          role: user.role
+        }
+      }
     }, 201)
+
   } catch (error) {
-    console.error(error)
-    return c.json({ error: 'Registration failed' }, 400)
+    console.error("ERREUR REGISTER :", error.message)
+    return c.json({ message: error.message || 'Erreur inscription' }, 400)
   }
 }
 
-async function login(c) {
+export const login = async (c) => {
   try {
-    const { email, password } = c.req.valid('json')
-    const token = await authService.login(email, password)
+    const { email, password } = await c.req.json()
+    console.log("LOGIN → tentative pour :", email)
 
-    return c.json({ message: 'Login successful', token })
-  } catch (error) {
-    console.log("error:", error.message)
+    const result = await authService.login(email, password)
 
-    return c.json({ error: error.message }, 401)
-  }
-}
-
-
-async function forgotPassword(c) {
-  try {
-    const { email } = c.req.valid('json')
-    await authService.forgotPassword(email)
     return c.json({
-      message: 'Password reset instructions sent to your email'
-    })
+      message: 'Connexion réussie',
+      data: result
+    }, 200)
+
   } catch (error) {
-    console.error(error)
-    return c.json({ error: 'Password reset request failed' }, 400)
+    console.log("LOGIN ÉCHOUÉ :", error.message)
+    return c.json({ message: error.message }, 401)
   }
 }
 
-async function sendVerification(c) {
-  try {
-    const { email } = c.req.valid('json')
-    await authService.sendEmailVerification(email)
-    return c.json({
-      message: 'Veification Email Sent'
-    })
-  } catch (error) {
-    console.error(error)
-    return c.json({ error: 'Verification email couldnt be sent' }, 400)
-  }
-}
-
-async function resetPassword(c) {
-  try {
-    const { token, password } = c.req.valid('json')
-    await authService.resetPassword(token, password)
-    return c.json({ message: 'Password successfully reset' })
-  } catch (error) {
-    console.error("error:", error)
-    return c.json({ error: 'Password reset failed' }, 400)
-  }
-}
-
-async function verifyUserEmail(c) {
-
-  try {
-    const token = c.req.param('token')
-    console.log("token:", token)
-    await authService.verifyEmail(token)
-    return c.json({ message: 'Email verified successfully' })
-  } catch (error) {
-    console.log("error:", error)
-    return c.json({ error: 'Email verification failed' }, 400)
-  }
-}
-
-export { register, verifyUserEmail, resetPassword, forgotPassword, login, sendVerification }
-
+// Les autres fonctions (forgot, reset, etc.) restent vides pour l'instant
+export const forgotPassword = async (c) => c.json({ message: 'Pas encore implémenté' }, 501)
+export const resetPassword = async (c) => c.json({ message: 'Pas encore implémenté' }, 501)
+export const sendVerification = async (c) => c.json({ message: 'Pas encore implémenté' }, 501)
+export const verifyUserEmail = async (c) => c.json({ message: 'Pas encore implémenté' }, 501)

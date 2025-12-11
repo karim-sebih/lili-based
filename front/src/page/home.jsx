@@ -1,28 +1,57 @@
-import { getUsers } from '@/api/auth'
-import { useQuery } from '@tanstack/react-query'
-
-
+// front/src/page/home.jsx
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Home() {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers
-  })
+  const navigate = useNavigate()
 
-  if (isLoading) return <div>Chargement...</div>
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    const token = localStorage.getItem('token')
+
+    // Pas connecté → login
+    if (!user || !token) {
+      navigate('/auth/login')
+      return
+    }
+
+    try {
+      const parsedUser = JSON.parse(user)
+
+      // Super admin (toi et les formateurs)
+      if (parsedUser.role === 'super_admin') {
+        navigate('/dashboard/admin')
+        return
+      }
+
+      // Restaurant
+      if (parsedUser.organization_type === 'restaurant') {
+        navigate('/dashboard/restaurant')
+        return
+      }
+
+      // Association
+      if (parsedUser.organization_type === 'association') {
+        navigate('/dashboard/association')
+        return
+      }
+
+      // Sécurité : rôle inconnu
+      localStorage.clear()
+      navigate('/auth/login')
+
+    } catch  {
+      localStorage.clear()
+      navigate('/auth/login')
+    }
+  }, [navigate])
 
   return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold mb-8">Utilisateurs inscrits ({users?.data?.length || 0})</h1>
-      
-      <div className="grid gap-4">
-        {users?.data?.map(user => (
-          <div key={user.id} className="p-6 bg-white rounded-lg shadow">
-            <p><strong>{user.first_name} {user.last_name}</strong></p>
-            <p className="text-gray-600">{user.email}</p>
-            <p className="text-sm text-gray-500">Rôle: {user.role} • Inscrit le {new Date(user.created_at).toLocaleDateString('fr-FR')}</p>
-          </div>
-        ))}
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mx-auto"></div>
+        <p className="mt-8 text-xl font-medium text-gray-700">Connexion en cours...</p>
+        <p className="mt-2 text-sm text-gray-500">Redirection vers votre espace</p>
       </div>
     </div>
   )

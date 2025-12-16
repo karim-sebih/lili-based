@@ -1,25 +1,38 @@
-// front/src/api/auth.js (updated with react-query/axios, for new DB)
-import axios from 'axios'
+import instance from "./config";
+//Fonctions pour appeler le backend (login, register...)
 
-const api = axios.create({
-  baseURL: '/api/auth',
-  headers: { 'Content-Type': 'application/json' }
-})
+// async function signIn(data) {
+//     return await instance.post("/api/auth/login", data)
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
+// }
 
-export const register = async (data) => (await api.post('/register', data)).data.data
-
-export const login = async (credentials) => {
-  const res = await api.post('/login', credentials)
-  const { user, token } = res.data.data
-  localStorage.setItem('token', token)
-  localStorage.setItem('user', JSON.stringify(user))
-  return user
+async function login(data) {
+    const res = await instance.post("/api/auth/login", data);
+    // Stocke le token dans localStorage si succès
+    if(res.data.accessToken){
+        localStorage.setItem("accessToken", res.data.accessToken);
+    }
+    return res.data;
 }
 
-export const getMe = async () => (await api.get('/me')).data.user
+async function register(data) {
+    return await instance.post("/api/auth/register", data);
+}
+
+async function getAuthenticated() {
+    return await instance.get("/authenticated");
+}
+
+async function listUsersExample() {
+
+  try {
+    const response = await instance.get("/api/users"); 
+    return response.data; 
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs :", error);
+    throw error;
+  }
+
+}
+
+export { login, register, getAuthenticated, listUsersExample }
